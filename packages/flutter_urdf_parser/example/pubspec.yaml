@@ -1,0 +1,49 @@
+name: example
+description: "Example for the urdf_parser library"
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_gl: ^0.0.21
+  three_dart:
+    git:
+      url: https://github.com/L3odr0id/three_dart.git
+      ref: 695b58ab4ef889c4f472fb79420a36134974da5e
+  three_dart_jsm:
+    git:
+      url: https://github.com/wasabia/three_dart_jsm.git
+  
+  path_provider: ^2.1.1
+
+  urdf_parser: 
+    path: ../
+
+  # replace with
+  # urdf_parser:
+  #   urdf_parser: ^0.0.2
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+dependency_overrides:
+  flutter_gl:
+    path: ../../flutter_gl/flutter_gl
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/T12/
+    - assets/T12/urdf/
+    - assets/T12/meshes/
+    - assets/T12/urdf/T12.URDF
+    - assets/stl/

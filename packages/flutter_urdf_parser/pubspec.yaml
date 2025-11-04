@@ -1,0 +1,36 @@
+name: urdf_parser
+description: A urdf parser extension for three_dart that also includes a dae/stl loader.
+version: 0.0.5
+publish_to: 'none'
+homepage: https://github.com/JayKay135/flutter-urdf-parser
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+    
+  collection: ^1.17.2
+  path: ^1.8.3
+
+  flutter_gl: ^0.0.21
+  three_dart:
+    git:
+      url: https://github.com/L3odr0id/three_dart.git
+      ref: 695b58ab4ef889c4f472fb79420a36134974da5e
+  three_dart_jsm:
+    git:
+      url: https://github.com/wasabia/three_dart_jsm.git
+
+  xml: ^6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+dependency_overrides:
+  flutter_gl:
+    path: ../flutter_gl/flutter_gl
