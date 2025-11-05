@@ -10,6 +10,21 @@ This repository captures local fixes required for WebGL support (Wasabia fork) a
 - `packages/flutter_gl/` – fork of [wasabia/flutter_gl](https://github.com/wasabia/flutter_gl) (commit a5b8ff7…) containing WebGL view registration updates.
 - `packages/flutter_urdf_parser/example/` – sample Flutter application demonstrating URDF rendering on the web via the local packages.
 
+### Platform support snapshot
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Web (Chrome) | ✅ Supported | Tested with `flutter run -d chrome` |
+| Android/iOS | ⚠️ Requires further testing | Uses `flutter_gl` native plugins |
+| Windows/macOS | ⚠️ Community support | Dependent on `flutter_gl` platform plugins |
+| Linux | 🚫 Fallback to 2D preview | Currently shows informational message |
+
+<div align="center">
+
+![Web example rendering](docs/example_web_render.png)
+
+</div>
+
 ## Using the packages
 
 In your Flutter project `pubspec.yaml`:

@@ -57,6 +57,11 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
   late three_jsm.OrbitControls controls;
 
   URDFRobot? robot;
+  bool _unsupportedPlatform = false;
+  static const String _linuxUnsupportedMessage =
+      "当前版本暂不支持 Linux 平台的实时 3D 渲染，请在 Web/移动端体验或使用自定义 2D 预览。";
+
+  bool get _isLinuxDesktop => !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
 
   @override
   void initState() {
@@ -93,6 +98,18 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
+    if (_isLinuxDesktop) {
+      if (!_unsupportedPlatform) {
+        _unsupportedPlatform = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {});
+          }
+        });
+      }
+      return;
+    }
+
     width = screenSize!.width;
     height = screenSize!.height;
 
@@ -125,6 +142,10 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
   }
 
   void changeScreenSize() {
+    if (_unsupportedPlatform) {
+      return;
+    }
+
     screenSize = MediaQuery.of(context).size;
 
     width = screenSize!.width;
@@ -142,6 +163,27 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
       body: Builder(
         builder: (BuildContext context) {
           initSize(context);
+          if (_unsupportedPlatform) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.desktop_windows_outlined, size: 48, color: Colors.orange),
+                    const SizedBox(height: 16),
+                    Text(
+                      _linuxUnsupportedMessage,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           return SingleChildScrollView(child: _build(context));
         },
       ),
@@ -177,6 +219,10 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
   }
 
   void render() {
+    if (_unsupportedPlatform) {
+      return;
+    }
+
     int t = DateTime.now().millisecondsSinceEpoch;
     final gl = three3dRender.gl;
 
@@ -220,6 +266,10 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
   }
 
   void initRenderer() {
+    if (_unsupportedPlatform) {
+      return;
+    }
+
     Map<String, dynamic> options = {"width": width, "height": height, "gl": three3dRender.gl, "antialias": true, "canvas": three3dRender.element};
     renderer = three.WebGLRenderer(options);
     renderer!.setPixelRatio(dpr);
