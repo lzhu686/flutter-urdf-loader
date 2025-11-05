@@ -13,10 +13,13 @@ class OpenGLContextWeb extends OpenGL30Constant {
   bool debug = true;
 
   OpenGLContextWeb(Map<String, dynamic> parameters) {
-    print(" OpenGLContextWeb ");
-    print(parameters);
-
     this.gl = parameters["gl"];
+    debug = parameters["debug"] ?? false;
+
+    if (debug) {
+      print(" OpenGLContextWeb ");
+      print(parameters);
+    }
   }
 
   scissor(x, y, z, w) {

@@ -39,6 +39,9 @@ class FlutterGlPlugin extends FlutterGlPlatform {
 
     // used for web
     _options["divId"] = textureId.toString();
+    if (resp.containsKey("dpr")) {
+      _options["dpr"] = resp["dpr"];
+    }
     openGL = OpenGL().init(_options);
 
     return resp;

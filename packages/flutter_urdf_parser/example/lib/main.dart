@@ -418,5 +418,15 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
 
     element.style.width = "${width}px";
     element.style.height = "${height}px";
+    final parent = element.parent;
+    if (parent != null) {
+      try {
+        parent.style.width = "${width}px";
+        parent.style.height = "${height}px";
+        parent.style.display = "block";
+      } catch (_) {
+        // non-web parents will not expose styling APIs
+      }
+    }
   }
 }
