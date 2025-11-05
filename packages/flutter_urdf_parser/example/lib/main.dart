@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'package:flutter_gl/flutter_gl.dart';
 import 'package:three_dart/three_dart.dart' as three;
@@ -399,9 +400,10 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
       return;
     }
 
+    controls?.update();
     render();
 
-    Future.delayed(const Duration(milliseconds: 60), () {
+    SchedulerBinding.instance.scheduleFrameCallback((_) {
       animate();
     });
   }
