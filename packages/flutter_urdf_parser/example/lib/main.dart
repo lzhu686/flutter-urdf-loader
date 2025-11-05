@@ -120,7 +120,12 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
     width = screenSize!.width;
     height = screenSize!.height;
 
-    initPlatformState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || screenSize == null) {
+        return;
+      }
+      initPlatformState();
+    });
   }
 
   void changeScreenSize() {
