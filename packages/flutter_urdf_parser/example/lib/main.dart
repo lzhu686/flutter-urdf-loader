@@ -32,8 +32,8 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
   three.WebGLRenderer? renderer;
 
   int? fboId;
-  late double width;
-  late double height;
+  double width = 0;
+  double height = 0;
 
   Size? screenSize;
 
@@ -45,16 +45,13 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
   bool verbose = false;
   bool disposed = false;
 
-  late three.WebGLRenderTarget renderTarget;
+  three.WebGLRenderTarget? renderTarget;
 
   dynamic sourceTexture;
 
-  late bool resizing;
-  DateTime? lastResize;
-
   late GlobalKey<three_jsm.DomLikeListenableState> _globalKey;
 
-  late three_jsm.OrbitControls controls;
+  three_jsm.OrbitControls? controls;
 
   URDFRobot? robot;
   bool _unsupportedPlatform = false;
@@ -66,8 +63,7 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
   @override
   void initState() {
     _globalKey = GlobalKey<three_jsm.DomLikeListenableState>();
-
-    resizing = false;
+    three3dRender = FlutterGlPlugin();
 
     super.initState();
 
@@ -76,24 +72,8 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
 
   @override
   void didChangeMetrics() {
-    setState(() {
-      resizing = true;
-      lastResize = DateTime.now();
-
-      checkForResizeEnd();
-    });
-  }
-
-  Future<void> checkForResizeEnd() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    if (DateTime.now().difference(lastResize!) > const Duration(milliseconds: 100)) {
-      setState(() {
-        resizing = false;
-
-        changeScreenSize();
-      });
-    }
+    super.didChangeMetrics();
+    changeScreenSize();
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -113,8 +93,6 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
     width = screenSize!.width;
     height = screenSize!.height;
 
-    three3dRender = FlutterGlPlugin();
-
     Map<String, dynamic> options = {"antialias": true, "alpha": false, "width": width.toInt(), "height": height.toInt(), "dpr": dpr};
 
     await three3dRender.initialize(options: options);
@@ -125,6 +103,7 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
       await three3dRender.prepareContext();
 
       await initScene();
+      _updateCanvasStyle();
     });
   }
 
@@ -137,24 +116,69 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
 
     screenSize = mqd.size;
     dpr = mqd.devicePixelRatio;
+    width = screenSize!.width;
+    height = screenSize!.height;
 
     initPlatformState();
   }
 
   void changeScreenSize() {
-    if (_unsupportedPlatform) {
+    if (!mounted) {
       return;
     }
 
-    screenSize = MediaQuery.of(context).size;
+    final mediaQuery = MediaQuery.of(context);
+    final Size newSize = mediaQuery.size;
+    final double newDpr = mediaQuery.devicePixelRatio;
 
-    width = screenSize!.width;
-    height = screenSize!.height;
+    if (newSize.width <= 0 || newSize.height <= 0) {
+      return;
+    }
 
-    renderer!.setPixelRatio(MediaQuery.of(context).devicePixelRatio);
+    if (screenSize != null &&
+        (screenSize!.width - newSize.width).abs() < 0.5 &&
+        (screenSize!.height - newSize.height).abs() < 0.5 &&
+        (dpr - newDpr).abs() < 0.01) {
+      return;
+    }
+
+    setState(() {
+      screenSize = newSize;
+      width = newSize.width;
+      height = newSize.height;
+      dpr = newDpr;
+    });
+
+    if (_unsupportedPlatform || renderer == null) {
+      return;
+    }
+
+    renderer!.setPixelRatio(newDpr);
     renderer!.setSize(width, height, true);
 
-    initScene();
+    if (camera is three.PerspectiveCamera) {
+      final perspectiveCamera = camera as three.PerspectiveCamera;
+      perspectiveCamera.aspect = width / height;
+      perspectiveCamera.updateProjectionMatrix();
+    }
+
+    if (!kIsWeb) {
+      final pars = three.WebGLRenderTargetOptions({
+        "minFilter": three.LinearFilter,
+        "magFilter": three.LinearFilter,
+        "format": three.RGBAFormat,
+      });
+
+      renderTarget?.dispose();
+      renderTarget = three.WebGLRenderTarget((width * dpr).toInt(), (height * dpr).toInt(), pars);
+      renderTarget!.samples = 4;
+      renderer!.setRenderTarget(renderTarget!);
+      sourceTexture = renderer!.getRenderTargetGLTexture(renderTarget!);
+    } else {
+      _updateCanvasStyle();
+    }
+
+    controls?.update();
   }
 
   @override
@@ -184,37 +208,32 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
             );
           }
 
-          return SingleChildScrollView(child: _build(context));
+          return _build(context);
         },
       ),
     );
   }
 
   Widget _build(BuildContext context) {
-    return Column(
-      children: [
-        three_jsm.DomLikeListenable(
-            key: _globalKey,
-            builder: (BuildContext context) {
-              if (resizing) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Colors.green),
-                );
-              }
-
-              return Container(
-                  width: width,
-                  height: height,
-                  color: Colors.red,
-                  child: Builder(builder: (BuildContext context) {
-                    if (kIsWeb) {
-                      return three3dRender.isInitialized ? HtmlElementView(viewType: three3dRender.textureId!.toString()) : Container();
-                    } else {
-                      return three3dRender.isInitialized ? Texture(textureId: three3dRender.textureId!) : Container();
-                    }
-                  }));
-            }),
-      ],
+    return SizedBox.expand(
+      child: three_jsm.DomLikeListenable(
+          key: _globalKey,
+          builder: (BuildContext context) {
+            return SizedBox.expand(
+                child: Container(
+                    color: Colors.black,
+                    child: Builder(builder: (BuildContext context) {
+                      if (kIsWeb) {
+                        return three3dRender.isInitialized
+                            ? HtmlElementView(viewType: three3dRender.textureId!.toString())
+                            : const SizedBox.shrink();
+                      } else {
+                        return three3dRender.isInitialized
+                            ? Texture(textureId: three3dRender.textureId!)
+                            : const SizedBox.shrink();
+                      }
+                    })));
+          }),
     );
   }
 
@@ -270,7 +289,13 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
       return;
     }
 
-    Map<String, dynamic> options = {"width": width, "height": height, "gl": three3dRender.gl, "antialias": true, "canvas": three3dRender.element};
+    Map<String, dynamic> options = {
+      "width": width,
+      "height": height,
+      "gl": three3dRender.gl,
+      "antialias": true,
+      "canvas": three3dRender.element
+    };
     renderer = three.WebGLRenderer(options);
     renderer!.setPixelRatio(dpr);
     renderer!.setSize(width, height, false);
@@ -279,9 +304,9 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
     if (!kIsWeb) {
       var pars = three.WebGLRenderTargetOptions({"minFilter": three.LinearFilter, "magFilter": three.LinearFilter, "format": three.RGBAFormat});
       renderTarget = three.WebGLRenderTarget((width * dpr).toInt(), (height * dpr).toInt(), pars);
-      renderTarget.samples = 4;
-      renderer!.setRenderTarget(renderTarget);
-      sourceTexture = renderer!.getRenderTargetGLTexture(renderTarget);
+      renderTarget!.samples = 4;
+      renderer!.setRenderTarget(renderTarget!);
+      sourceTexture = renderer!.getRenderTargetGLTexture(renderTarget!);
     }
   }
 
@@ -301,15 +326,15 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
     // --- Controls ---
     controls = three_jsm.OrbitControls(camera, _globalKey);
 
-    controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-    controls.dampingFactor = 0.05;
+    controls!.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+    controls!.dampingFactor = 0.05;
 
-    controls.screenSpacePanning = false;
+    controls!.screenSpacePanning = false;
 
-    controls.minDistance = 10;
-    controls.maxDistance = 1000;
+    controls!.minDistance = 10;
+    controls!.maxDistance = 1000;
 
-    controls.maxPolarAngle = pi / 2;
+    controls!.maxPolarAngle = pi / 2;
 
     // --- World ---
 
@@ -379,5 +404,19 @@ class _ExamplePageState extends State<ExamplePage> with WidgetsBindingObserver {
     Future.delayed(const Duration(milliseconds: 60), () {
       animate();
     });
+  }
+
+  void _updateCanvasStyle() {
+    if (!kIsWeb) {
+      return;
+    }
+
+    final element = three3dRender.element;
+    if (element == null) {
+      return;
+    }
+
+    element.style.width = "${width}px";
+    element.style.height = "${height}px";
   }
 }
