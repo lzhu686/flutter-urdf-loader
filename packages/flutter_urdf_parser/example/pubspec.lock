@@ -383,20 +383,16 @@ packages:
   three_dart:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "695b58ab4ef889c4f472fb79420a36134974da5e"
-      resolved-ref: "695b58ab4ef889c4f472fb79420a36134974da5e"
-      url: "https://github.com/L3odr0id/three_dart.git"
-    source: git
+      path: "../../three_dart"
+      relative: true
+    source: path
     version: "0.0.16"
   three_dart_jsm:
     dependency: "direct main"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: ce14521eab607d26bc4624a5d76f81d3142b43f1
-      url: "https://github.com/wasabia/three_dart_jsm.git"
-    source: git
+      path: "../../three_dart_jsm"
+      relative: true
+    source: path
     version: "0.0.10"
   typed_data:
     dependency: transitive

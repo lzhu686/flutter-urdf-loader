@@ -17,12 +17,9 @@ dependencies:
 
   flutter_gl: ^0.0.21
   three_dart:
-    git:
-      url: https://github.com/L3odr0id/three_dart.git
-      ref: 695b58ab4ef889c4f472fb79420a36134974da5e
+    path: ../three_dart
   three_dart_jsm:
-    git:
-      url: https://github.com/wasabia/three_dart_jsm.git
+    path: ../three_dart_jsm
 
   xml: ^6.3.0
 
