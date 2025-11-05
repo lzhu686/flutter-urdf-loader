@@ -21,7 +21,7 @@ This repository captures local fixes required for WebGL support (Wasabia fork) a
 
 <div align="center">
 
-![Web example rendering](docs/example_web_render.png)
+![Web example rendering](docs/example_web_render.jpg)
 
 </div>
 
